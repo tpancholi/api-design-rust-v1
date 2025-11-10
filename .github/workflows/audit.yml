@@ -1,0 +1,41 @@
+name: Security audit
+
+on:
+  schedule:
+    - cron: '0 0 * * 0' # run weekly on Sunday at midnight UTC
+  push:
+    paths:
+      - '**/Cargo.toml'
+      - '**/Cargo.lock'
+
+jobs:
+  security_audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-audit,cargo-deny,cargo-udeps
+
+      - name: Vulnerability scanning
+        run: cargo audit
+
+      - name: Scan for vulnerabilities
+        run: cargo deny check advisories
+
+      - name: Scan for unused dependency detection
+        run: cargo udeps
+        continue-on-error: true

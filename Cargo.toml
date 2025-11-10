@@ -1,5 +1,8 @@
 [package]
 name = "api-design-rust-v1"
+description = "RAG API using HuggingFace models powered by Rust"
+keywords = ["rag-pipeline", "rust", "huggingface", "aws"]
+authors = ["Tejas Pancholi"]
 version = "0.1.0"
 edition = "2024"
 

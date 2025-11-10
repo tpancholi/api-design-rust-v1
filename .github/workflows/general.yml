@@ -1,0 +1,102 @@
+name: Rust CI (Actix Web)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: "-D warnings"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build & Test
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        toolchain: [stable]  # could include beta or nightly for compatibility testing
+
+    steps:
+      - uses: actions/checkout@v5
+
+      # Cache dependencies & build artifacts
+      - name: Cache Cargo registry + build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      # Setup Rust toolchain
+      - name: Install Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          components: clippy, rustfmt
+
+      # Optional: check formatting (dev discipline)
+      - name: Check formatting
+        run: cargo fmt --all --check
+
+      # Lint with clippy (treat warnings as errors)
+      - name: Run Clippy (lint)
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
+      # Build all crates (for monorepos this ensures no broken crate)
+      - name: Build
+        run: cargo build --workspace --all-targets --all-features
+
+      # Run all tests (including integration tests)
+      - name: Run Tests
+        run: cargo test --workspace --all-features --verbose
+
+      # Check binary builds successfully in release mode (common Actix failure point)
+      - name: Build Release Binary
+        run: cargo build --release --workspace --all-features
+
+  # Optional coverage job (enable when needed)
+  coverage:
+    name: Code Coverage
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          components: llvm-tools-preview
+
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-llvm-cov
+
+      - name: Run Coverage
+        run: |
+          cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info
+          cargo llvm-cov report --html --output-dir coverage
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
