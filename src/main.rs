@@ -1,5 +1,5 @@
-use std::net::TcpListener;
 use api_design_rust_v1::run;
+use std::net::TcpListener;
 
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {

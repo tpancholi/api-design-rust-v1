@@ -8,7 +8,7 @@ async fn health_check_works() {
 
     // Act
     let response = client
-        .get(&format!("{}/health_check", &address))
+        .get(format!("{}/health_check", &address))
         .send()
         .await
         .expect("Failed to execute request.");
@@ -17,7 +17,7 @@ async fn health_check_works() {
     assert!(response.status().is_success());
     assert_eq!(Some(0), response.content_length());
 }
-
+#[allow(clippy::let_underscore_future)]
 fn spawn_app() -> String {
     let listener = TcpListener::bind("127.0.0.1:0").expect("Failed to start server");
     let port = listener.local_addr().unwrap().port();
@@ -35,7 +35,7 @@ async fn login_returns_a_200_for_valid_form_data() {
     // Act
     let body = "email=admin%40gmail.com&password=admin1234";
     let response = client
-        .post(&format!("{}/login", &app_address))
+        .post(format!("{}/login", &app_address))
         .header("Content-Type", "application/x-www-form-urlencoded")
         .body(body)
         .send()
@@ -60,7 +60,7 @@ async fn login_returns_a_400_when_data_is_missing() {
     for (invalid_body, error_message) in test_cases {
         // Act
         let response = client
-            .post(&format!("{}/login", &app_address))
+            .post(format!("{}/login", &app_address))
             .header("Content-Type", "application/x-www-form-urlencoded")
             .body(invalid_body)
             .send()
@@ -68,10 +68,11 @@ async fn login_returns_a_400_when_data_is_missing() {
             .expect("Failed to execute request.");
 
         // Assert
-        assert_eq!(400,
-                   response.status().as_u16(),
-                   "The API did not fail with 400 Bad request when the payload was {}.",
-                   error_message
+        assert_eq!(
+            400,
+            response.status().as_u16(),
+            "The API did not fail with 400 Bad request when the payload was {}.",
+            error_message
         );
     }
 }
