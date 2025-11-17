@@ -2,10 +2,10 @@ name: Rust CI (Actix Web)
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
   pull_request:
-    types: [opened, synchronize, reopened]
-    branches: [main]
+    types: [ opened, synchronize, reopened ]
+    branches: [ main ]
 
 env:
   CARGO_TERM_COLOR: always
@@ -22,7 +22,7 @@ jobs:
 
     strategy:
       matrix:
-        toolchain: [stable]  # could include beta or nightly for compatibility testing
+        toolchain: [ stable ]  # could include beta or nightly for compatibility testing
 
     steps:
       - uses: actions/checkout@v5
@@ -43,8 +43,9 @@ jobs:
       - name: Install Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          toolchain: ${{ matrix.toolchain }}
-          components: clippy, rustfmt
+          toolchain: stable
+          components: rustfmt, clippy
+          override: true
 
       # Optional: check formatting (dev discipline)
       - name: Check formatting
