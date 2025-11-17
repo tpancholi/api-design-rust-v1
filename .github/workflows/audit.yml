@@ -2,7 +2,7 @@ name: Security audit
 
 on:
   schedule:
-    - cron: '0 0 * * 0' # Weekly on Sunday midnight UTC
+    - cron: '0 0 * * 0'
   push:
     paths:
       - '**/Cargo.toml'
@@ -15,37 +15,20 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Clean Cargo cache (optional)
-        run: |
-          rm -rf ~/.cargo/registry
-          rm -rf ~/.cargo/git
-        continue-on-error: true
-
-      - name: Cache Cargo registry and git
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-
-
-      - name: Install stable toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: stable
 
-      - name: Install cargo tools
+      - name: Install tools
         uses: taiki-e/install-action@v2
         with:
-          tool: cargo-audit@0.20.1,cargo-deny
+          tool: cargo-audit,cargo-deny
 
-      - name: Ensure Cargo.lock exists
+      - name: Generate lockfile (if missing)
         run: cargo generate-lockfile
 
-      - name: Vulnerability scanning (cargo audit)
+      - name: Run cargo audit
         run: cargo audit
 
-      - name: Scan for vulnerabilities (cargo deny)
+      - name: Run cargo deny
         run: cargo deny check advisories
