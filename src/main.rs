@@ -1,8 +1,11 @@
-use api_design_rust_v1::run;
+use api_design_rust_v1::configuration::get_configuration;
+use api_design_rust_v1::startup::run;
 use std::net::TcpListener;
 
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {
-    let listener = TcpListener::bind("127.0.0.1:8000").expect("Failed to start server");
+    let configuration = get_configuration().expect("Failed to read configuration.");
+    let address = format!("127.0.0.1:{}", configuration.application_port);
+    let listener = TcpListener::bind(address)?;
     run(listener)?.await
 }

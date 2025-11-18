@@ -48,5 +48,11 @@ docker exec -it rust_pg18 psql -U postgres -d habit_tracker_db -c "SELECT uuidv7
 ./scripts/stop_postgres.sh
 ```
 
+- Post initialization subsequent db start script
+
+```bash
+SKIP_DOCKER=true ./scripts/init_db.sh
+```
+
 - DB URL -> `postgres://app:secret@localhost:5432/habit_tracker_db`
 
