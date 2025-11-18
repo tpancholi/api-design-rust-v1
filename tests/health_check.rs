@@ -1,4 +1,6 @@
+use api_design_rust_v1::configuration::get_configuration;
 use api_design_rust_v1::startup::run;
+use sqlx::{Connection, PgConnection};
 use std::net::TcpListener;
 
 #[tokio::test]
@@ -31,6 +33,11 @@ fn spawn_app() -> String {
 async fn login_returns_a_200_for_valid_form_data() {
     // Arrange
     let app_address = spawn_app();
+    let configuration = get_configuration().expect("Failed to read configuration.");
+    let connection_string = configuration.database.get_connection_string();
+    let mut connection = PgConnection::connect(&connection_string)
+        .await
+        .expect("Failed to connect to Postgres.");
     let client = reqwest::Client::new();
 
     // Act
@@ -45,6 +52,12 @@ async fn login_returns_a_200_for_valid_form_data() {
 
     // Assert
     assert_eq!(200, response.status().as_u16());
+    let saved = sqlx::query!("SELECT email, password_hash from users",)
+        .fetch_one(&mut connection)
+        .await
+        .expect("Failed to fetch saved user.");
+
+    assert_eq!(saved.email, "user@example.com")
 }
 
 #[tokio::test]
